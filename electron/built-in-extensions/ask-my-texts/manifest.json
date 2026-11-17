@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Ask My Texts",
+  "version": "1.0.0",
+  "description": "Search the local Ask My Texts index from RightTab.",
+  "action": {
+    "default_title": "Ask My Texts",
+    "default_popup": "popup.html"
+  }
+}

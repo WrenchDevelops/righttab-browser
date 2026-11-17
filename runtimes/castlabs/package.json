@@ -1,0 +1,10 @@
+{
+  "name": "righttab-castlabs-runtime",
+  "private": true,
+  "description": "Opt-in Widevine development runtime; keep separate from the current stock Electron security release.",
+  "engines": { "node": ">=22.12.0" },
+  "dependencies": {
+    "electron": "https://codeload.github.com/castlabs/electron-releases/tar.gz/ab2120c6a5d49d412bcb2b7e3f9c9c3e74cb0243"
+  },
+  "scripts": { "postinstall": "node node_modules/electron/install.js" }
+}

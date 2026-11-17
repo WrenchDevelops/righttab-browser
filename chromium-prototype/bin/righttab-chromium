@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eu
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+BROWSER="$ROOT/runtime/chrome-mac/Chromium.app/Contents/MacOS/Chromium"
+PROFILE="$ROOT/profile"
+if [ ! -x "$BROWSER" ]; then
+  echo 'Chromium snapshot missing. Run chromium-prototype/bin/fetch-chromium first.' >&2
+  exit 1
+fi
+if [ "$#" -ne 1 ] || [ ! -f "$1/manifest.json" ]; then
+  echo 'Usage: righttab-chromium /absolute/path/to/unpacked/extension' >&2
+  exit 2
+fi
+EXTENSION=$(CDPATH='' cd -- "$1" && pwd)
+mkdir -p "$PROFILE"
+exec "$BROWSER" "--user-data-dir=$PROFILE" --no-first-run --no-default-browser-check "--load-extension=$EXTENSION" 'https://chatgpt.com/'

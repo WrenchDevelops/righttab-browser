@@ -1,0 +1,135 @@
+const fs = require('fs');
+const path = require('path');
+const assert = require('node:assert/strict');
+const { dialog, nativeTheme } = require('electron');
+const T = require('../shared/themes.js');
+
+async function runThemeSmoke(browser, win, outDir, ok) {
+  const ui = win.ui.webContents;
+  const js = source => ui.executeJavaScript(source);
+  const until = async (source) => {
+    for (let n = 0; n < 80; n++) {
+      if (await js(source)) return;
+      await new Promise(r => setTimeout(r, 50));
+    }
+    throw Error('Theme smoke timeout: ' + source);
+  };
+  await until('typeof state !== "undefined" && !!state && !!state.settings.appearance');
+  const initial = browser.snapshot(win);
+  const contents = browser.activeContents(win);
+  const contentsId = contents.id;
+  await browser.mainSession.cookies.set({ url: 'https://example.com', name: 'theme-smoke', value: 'preserved', expirationDate: Date.now() / 1000 + 3600 });
+  await js("handleCommand('open-appearance')");
+  assert.equal(await js("document.querySelectorAll('[data-theme-id]').length"), 12);
+  for (const theme of T.presets) {
+    await js(`document.querySelector('[data-theme-id="${theme.id}"]').click()`);
+    await until(`document.documentElement.dataset.preset === '${theme.id}'`);
+    assert.equal(browser.store.settings.appearance.selected, theme.id);
+    const expectedSidebar = 'rgb(' + theme.colors.sidebar.slice(1).match(/../g).map(v => parseInt(v, 16)).join(', ') + ')';
+    await until(`getComputedStyle(document.querySelector('#sidebar')).backgroundColor === ${JSON.stringify(expectedSidebar)}`);
+    await new Promise(r => setTimeout(r, 180));
+    fs.writeFileSync(path.join(outDir, `theme-${theme.id}.png`), (await ui.capturePage()).toPNG());
+    await js('renderMenuPopover()');
+    await new Promise(r => setTimeout(r, 60));
+    assert.equal(await win.float.webContents.executeJavaScript("document.documentElement.dataset.preset"), theme.id);
+    await js('rt.closeFloat()');
+  }
+  ok('all 12 presets apply through real settings controls with browser previews');
+  await js("document.querySelector('[data-theme-filter=dark]').click()");
+  assert.equal(await js("document.querySelectorAll('[data-theme-id]').length"), 4);
+  await js("document.querySelector('[data-theme-filter=custom]').click()");
+  assert.equal(await js("document.querySelectorAll('[data-theme-id]').length"), 0);
+  await js("document.querySelector('[data-theme-filter=all]').click(); $('create-theme').click(); $('theme-name').value = 'Smoke Custom'; $('theme-name').dispatchEvent(new Event('input')); $('draft-corners').value='square'; $('draft-corners').dispatchEvent(new Event('change')); $('save-theme').click()");
+  await until("!themeDraft && state.settings.appearance.custom.length === 1");
+  const customId = browser.store.settings.appearance.selected;
+  await js("$('edit-theme').click(); $('theme-name').value='Cancelled Edit'; $('theme-name').dispatchEvent(new Event('input')); $('cancel-theme').click()");
+  assert.equal(browser.store.settings.appearance.custom[0].name, 'Smoke Custom');
+  await js("$('edit-theme').click(); $('theme-name').value='Renamed Custom'; $('theme-name').dispatchEvent(new Event('input')); $('save-theme').click()");
+  await until("!themeDraft && state.settings.appearance.custom[0].name === 'Renamed Custom'");
+  await js("$('duplicate-theme').click(); $('save-theme').click()");
+  await until("!themeDraft && state.settings.appearance.custom.length === 2");
+  assert.equal(T.presets[11].name, 'Retro Computer');
+  ok('custom create, rename, duplicate, cancel and slightly squared corners');
+  await js("$('edit-theme').click()");
+  fs.writeFileSync(path.join(outDir, 'theme-editor.png'), (await ui.capturePage()).toPNG());
+  await js("document.querySelector('[data-hex=text]').value='#EDEAE2'; document.querySelector('[data-hex=text]').dispatchEvent(new Event('input'))");
+  assert.equal(await js("$('save-theme').disabled"), true);
+  await js("$('adjust-theme').click()");
+  assert.equal(await js("$('save-theme').disabled"), false);
+  await js("$('cancel-theme').click()");
+  ok('low contrast is flagged and auto adjustment resolves it');
+  // Real IPC handlers with native file selections stubbed only in this isolated smoke process.
+  const openDialog = dialog.showOpenDialog, saveDialog = dialog.showSaveDialog;
+  const file = path.join(outDir, 'theme-roundtrip.json');
+  try {
+    dialog.showSaveDialog = async () => ({ canceled: false, filePath: file });
+    assert.equal((await js('rt.exportTheme(currentTheme().id)')).saved, true);
+    const exported = JSON.parse(fs.readFileSync(file, 'utf8'));
+    assert.equal(exported.version, 1);
+    dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [file] });
+    await js("$('import-theme').click()");
+    await until('!!themeDraft');
+    assert.equal(browser.store.settings.appearance.custom.length, 2);
+    assert.match(await js("$('theme-message').textContent"), /name already exists/);
+    await js("$('save-theme').click()");
+    await until('!themeDraft && state.settings.appearance.custom.length === 3');
+    fs.writeFileSync(file, '{bad json');
+    const invalid = await js('rt.importTheme()');
+    assert.match(invalid.error, /not valid JSON/);
+    fs.writeFileSync(file, JSON.stringify({ ...exported, css: 'body { display:none }' }));
+    assert.match((await js('rt.importTheme()')).error, /Only theme data/);
+    fs.writeFileSync(file, 'x'.repeat(32769));
+    assert.match((await js('rt.importTheme()')).error, /32 KB/);
+    fs.writeFileSync(file, JSON.stringify(exported));
+    ok('JSON export/import, preview without applying, duplicate names, invalid and oversized files');
+  } finally { dialog.showOpenDialog = openDialog; dialog.showSaveDialog = saveDialog; }
+  await js("$('follow-system').click()");
+  await until('state.settings.appearance.followSystem');
+  nativeTheme.themeSource = 'dark';
+  await until("document.documentElement.dataset.preset === 'midnight'");
+  nativeTheme.themeSource = 'light';
+  await until("document.documentElement.dataset.preset === 'cloud'");
+  await js("$('system-dark').value = 'cherry'; $('system-dark').dispatchEvent(new Event('change'))");
+  await until("state.settings.appearance.dark === 'cherry'");
+  nativeTheme.themeSource = 'dark';
+  await until("document.documentElement.dataset.preset === 'cherry'");
+  ok('native system appearance switches to separately selected light and dark themes');
+  await js(`document.querySelector('[data-theme-id="${customId}"]').click()`);
+  await until(`state.settings.appearance.selected === '${customId}' && !state.settings.appearance.followSystem`);
+  await js("window.confirm = () => true; $('delete-theme').click()");
+  await until("state.settings.appearance.selected === 'cloud'");
+  assert.equal(browser.store.settings.appearance.custom.some(t => t.id === customId), false);
+  const reopened = require('./store.cjs').openStore(browser.store.dir);
+  assert.deepEqual(reopened.settings.appearance, browser.store.settings.appearance);
+  ok('deleting active custom theme switches to Cloud; persisted settings reopen correctly');
+  await js("document.querySelector('[data-theme-id=matcha]').focus()");
+  win.win.show(); win.win.focus(); ui.focus();
+  await new Promise(r => setTimeout(r, 200));
+  await js("document.querySelector('[data-theme-id=matcha]').focus()");
+  assert.equal(await js("document.activeElement.dataset.themeId"), 'matcha');
+  ui.sendInputEvent({ type: 'keyDown', keyCode: 'Enter' });
+  ui.sendInputEvent({ type: 'char', keyCode: '\r' });
+  ui.sendInputEvent({ type: 'keyUp', keyCode: 'Enter' });
+  await until("state.settings.appearance.selected === 'matcha'");
+  await js("$('overlay').querySelectorAll('input')[document.querySelectorAll('#overlay input').length-1].focus()");
+  // Tab from the last focusable control wraps to the first settings navigation button.
+  ui.sendInputEvent({ type: 'keyDown', keyCode: 'Tab' });
+  ui.sendInputEvent({ type: 'keyUp', keyCode: 'Tab' });
+  await until("document.activeElement === document.querySelector('[data-pane=startup]')");
+  await js('closeOverlay(); renderMenuPopover()');
+  await new Promise(r => setTimeout(r, 200));
+  assert.ok(win.float.getVisible());
+  assert.equal(await win.float.webContents.executeJavaScript("document.documentElement.dataset.preset"), 'matcha');
+  assert.equal(await win.float.webContents.executeJavaScript("[...document.querySelectorAll('button')].some(b=>b.textContent==='Appearance')"), true);
+  await js('rt.closeFloat()');
+  ok('keyboard preset activation, dialog focus containment and themed floating browser menu');
+  assert.deepEqual(browser.snapshot(win).tabs.map(t => t.id), initial.tabs.map(t => t.id));
+  assert.equal(browser.activeContents(win).id, contentsId);
+  assert.equal(browser.store.settings.startupPage, initial.settings.startupPage);
+  assert.equal(browser.store.settings.searchEngine, initial.settings.searchEngine);
+  assert.equal((await browser.mainSession.cookies.get({ name: 'theme-smoke' }))[0].value, 'preserved');
+  ok('theme changes preserve tab identities, website view, login cookies and startup/search preferences');
+  await js("persistAppearance({ selected: 'cloud', followSystem: false })");
+  nativeTheme.themeSource = 'system';
+}
+module.exports = { runThemeSmoke };

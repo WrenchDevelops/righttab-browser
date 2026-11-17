@@ -1,0 +1,8 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>RightTab control test</title>
+<h1>RightTab browser-control test</h1>
+<p id="result">Button has not been clicked.</p>
+<button id="test-button" type="button">Click test button</button>
+<label for="test-input">Test input</label> <input id="test-input" type="text">
+<script>document.getElementById('test-button').addEventListener('click', () => { document.getElementById('result').textContent = 'Button clicked.'; });</script>
+</html>

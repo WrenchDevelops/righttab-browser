@@ -1,0 +1,20 @@
+const { app, components } = require('electron');
+const path = require('node:path');
+const { initializeMediaRuntime } = require('./media-runtime.cjs');
+if (!process.env.RIGHTTAB_MEDIA_TEST_PROFILE) throw new Error('Provide a separate cloned test profile.');
+app.setName('RightTab');
+app.setPath('userData', path.resolve(process.env.RIGHTTAB_MEDIA_TEST_PROFILE));
+const deadline = setTimeout(() => { console.error('Signed-in test deadline exceeded'); app.exit(1); }, 120000);
+app.whenReady().then(async () => {
+  console.log('SIGNED_IN_TEST', 'runtime ready');
+  app.userAgentFallback = String(app.userAgentFallback || '').replace(/\s+RightTab\/[\d.]+/gi, '');
+  app.configureHostResolver({ secureDnsMode: 'secure', secureDnsServers: ['https://dns.google/dns-query', 'https://cloudflare-dns.com/dns-query'], enableBuiltInResolver: true });
+  const mediaRuntime = await initializeMediaRuntime(components);
+  console.log('SIGNED_IN_TEST', 'components', JSON.stringify(mediaRuntime));
+  const browser = require('./browser.cjs').startBrowser({ mediaRuntime });
+  console.log('SIGNED_IN_TEST', 'browser initialized');
+  await require('./disney-live-check.cjs').run(browser, mediaRuntime);
+  clearTimeout(deadline);
+  browser.store.flush();
+  app.exit(0);
+}).catch((error) => { console.error(error); app.exit(1); });

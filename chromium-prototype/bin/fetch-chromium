@@ -1,0 +1,23 @@
+#!/bin/sh
+set -eu
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+RUNTIME="$ROOT/runtime"
+if [ "$(uname -s)-$(uname -m)" != Darwin-arm64 ]; then
+  echo 'This pinned snapshot is for Apple Silicon macOS only.' >&2
+  exit 1
+fi
+if [ -e "$RUNTIME/chrome-mac" ]; then
+  echo 'Chromium already exists; remove or move the runtime directory yourself to replace it.' >&2
+  exit 1
+fi
+mkdir -p "$RUNTIME"
+ARCHIVE=$(mktemp "${TMPDIR:-/tmp}/righttab-chromium.XXXXXX")
+trap 'rm -f "$ARCHIVE"' EXIT HUP INT TERM
+curl -fL https://storage.googleapis.com/chromium-browser-snapshots/Mac_Arm/1737016/chrome-mac.zip -o "$ARCHIVE"
+ACTUAL=$(md5 -q "$ARCHIVE")
+if [ "$ACTUAL" != 421d8976ae2358582731846a3f19889e ]; then
+  echo 'Archive checksum mismatch; refusing to unpack.' >&2
+  exit 1
+fi
+unzip -q "$ARCHIVE" -d "$RUNTIME"
+"$RUNTIME/chrome-mac/Chromium.app/Contents/MacOS/Chromium" --version

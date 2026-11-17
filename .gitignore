@@ -1,0 +1,13 @@
+node_modules/
+dist/
+dist-drm/
+.venv-evs/
+test-results/
+.DS_Store
+*.log
+chromium-prototype/runtime/
+chromium-prototype/profile/
+
+chromium-prototype/chrome-baseline-profile/
+
+.righttab-runtime/

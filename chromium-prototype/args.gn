@@ -1,0 +1,5 @@
+# Prepared configuration; not built or validated in this environment.
+is_debug = false
+is_component_build = true
+symbol_level = 0
+target_cpu = "arm64"

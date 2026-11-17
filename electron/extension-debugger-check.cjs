@@ -1,0 +1,26 @@
+const { app, BrowserWindow } = require('electron');
+const http = require('http');
+const assert = require('assert/strict');
+const { createExtensionDebugger } = require('./extension-debugger.cjs');
+app.setPath('userData', process.argv[2]);
+app.whenReady().then(async () => {
+  const server = http.createServer((_req, res) => { res.writeHead(200, { 'Content-Type': 'text/html' }); res.end('<title>Debugger test</title><button>Test</button>'); });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const win = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true } });
+  await win.loadURL(`http://127.0.0.1:${server.address().port}/`);
+  const events = [];
+  const owner = { id: 'test', permissions: ['debugger'] };
+  const bridge = createExtensionDebugger({ authenticate: (caller) => caller, getTargets: () => [{ id: win.webContents.id, contents: win.webContents }], emit: (...event) => events.push(event) });
+  const target = { tabId: win.webContents.id };
+  bridge.attach(owner, target, '1.3');
+  await bridge.sendCommand(owner, target, 'Runtime.enable');
+  const result = await bridge.sendCommand(owner, target, 'Runtime.evaluate', { expression: 'document.title', returnByValue: true });
+  assert.equal(result.result.value, 'Debugger test');
+  assert.ok(events.some((e) => e[1] === 'onEvent' && e[3] === 'Runtime.executionContextCreated'));
+  bridge.disconnectByUser(target.tabId);
+  assert.ok(events.some((e) => e[1] === 'onDetach' && e[3] === 'canceled_by_user'));
+  assert.equal(win.webContents.debugger.isAttached(), false);
+  bridge.dispose(); win.destroy(); server.close();
+  console.log('PASS: real WebContents debugger command, event, user disconnect');
+  app.exit(0);
+}).catch((error) => { console.error(error); app.exit(1); });

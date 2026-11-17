@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>New Tab</title>
+    <link rel="icon" href="logo.png" />
+    <link rel="stylesheet" href="newtab.css" />
+  </head>
+  <body>
+    <div class="page" id="page">
+      <div class="wallpaper" id="wallpaper" data-id="summit"></div>
+      <div class="dim" aria-hidden="true"></div>
+      <button class="customize glass" id="customize" type="button" aria-label="Customize homepage" aria-expanded="false" aria-controls="panel">
+        <svg class="icon-sliders" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+          <path d="M4 7h16M4 12h10M4 17h16" />
+          <circle cx="16" cy="7" r="2" fill="currentColor" stroke="none" />
+          <circle cx="10" cy="12" r="2" fill="currentColor" stroke="none" />
+          <circle cx="15" cy="17" r="2" fill="currentColor" stroke="none" />
+        </svg>
+        <svg class="icon-close" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M6 6l12 12M18 6 6 18" />
+        </svg>
+      </button>
+
+      <main class="stage">
+        <div class="cluster" id="cluster">
+          <img class="logo" id="logo" src="logo.png" alt="RightTab" width="625" height="460" />
+          <form class="search glass" id="search-form" role="search">
+            <span class="engine" id="engine-icon" aria-hidden="true"></span>
+            <input id="search-input" type="search" placeholder="Search the web or enter a URL..." autocomplete="off" spellcheck="false" enterkeyhint="search" role="combobox" aria-expanded="false" aria-controls="suggestions" aria-autocomplete="list" aria-label="Search the web or enter a URL" />
+            <ul class="suggestions" id="suggestions" role="listbox" hidden></ul>
+          </form>
+          <p class="search-note" id="search-note" hidden></p>
+          <div class="shortcuts" id="shortcuts"></div>
+        </div>
+      </main>
+
+      <footer class="dock">
+        <button class="widget weather glass" id="weather" type="button" aria-haspopup="dialog"></button>
+        <button class="widget clock" id="clock" type="button" aria-haspopup="dialog"></button>
+      </footer>
+
+      <aside class="panel glass" id="panel" aria-hidden="true" aria-label="Homepage customization">
+        <header class="panel-head">
+          <h2>Customize</h2>
+        </header>
+        <div class="panel-body">
+          <section>
+            <h3>Appearance</h3>
+            <label class="field">Theme
+              <select id="theme-preset"></select>
+            </label>
+            <label class="check"><input id="follow-system" type="checkbox" /> Match system appearance</label>
+            <label class="field accent-field">Accent
+              <input id="accent" type="color" value="#8E8E93" aria-label="Accent color" />
+            </label>
+            <button class="text-button" id="accent-reset" type="button">Use theme accent</button>
+            <p class="field-label">Wallpaper</p>
+            <div class="wallpaper-grid" id="wallpaper-choices"></div>
+            <button class="text-button" id="upload-wallpaper" type="button">Use your own image…</button>
+            <label class="field">Glass
+              <input id="glass" type="range" min="8" max="42" step="1" value="16" />
+            </label>
+            <label class="check"><input id="reduced-transparency" type="checkbox" /> Reduce transparency</label>
+          </section>
+          <section>
+            <h3>Homepage</h3>
+            <label class="check"><input id="show-logo" type="checkbox" /> Show logo</label>
+            <label class="check"><input id="show-shortcuts" type="checkbox" /> Show shortcuts</label>
+            <label class="check"><input id="show-weather" type="checkbox" /> Show weather</label>
+            <label class="check"><input id="show-clock" type="checkbox" /> Show clock</label>
+            <label class="field">Search engine
+              <select id="search-engine"></select>
+            </label>
+            <label class="check"><input id="search-suggestions" type="checkbox" /> Search suggestions</label>
+            <div class="custom-engine">
+              <input id="custom-engine-name" type="text" maxlength="40" placeholder="Engine name" aria-label="Custom search engine name" />
+              <input id="custom-engine-template" type="url" maxlength="300" placeholder="https://example.com/search?q=%s" aria-label="Custom search address" />
+              <button class="text-button" id="add-engine" type="button">Add search engine</button>
+              <p class="hint">Use %s where the query should go. The address must be https.</p>
+              <ul class="engine-list" id="engine-list"></ul>
+            </div>
+            <label class="field">Clock
+              <select id="clock-format">
+                <option value="12">12-hour</option>
+                <option value="24">24-hour</option>
+              </select>
+            </label>
+            <label class="check"><input id="show-seconds" type="checkbox" /> Show seconds</label>
+            <label class="field">Time zone
+              <select id="time-zone"></select>
+            </label>
+            <label class="check"><input id="clock-glass" type="checkbox" /> Clock background</label>
+            <label class="field">Temperature
+              <select id="weather-unit">
+                <option value="fahrenheit">Fahrenheit</option>
+                <option value="celsius">Celsius</option>
+              </select>
+            </label>
+          </section>
+          <section>
+            <h3>Layout</h3>
+            <label class="field">Shortcut size
+              <select id="shortcut-size">
+                <option value="compact">Compact</option>
+                <option value="regular">Regular</option>
+                <option value="large">Large</option>
+              </select>
+            </label>
+            <label class="field">Icon style
+              <select id="icon-style">
+                <option value="default">Default</option>
+                <option value="clear">Clear</option>
+                <option value="clear-colored">Clear Colored</option>
+              </select>
+            </label>
+            <label class="field">Shortcuts per row
+              <select id="shortcut-density">
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+              </select>
+            </label>
+            <label class="field">Vertical position
+              <input id="content-shift" type="range" min="-80" max="120" step="1" value="0" />
+            </label>
+            <label class="field">Background dimming
+              <input id="dimming" type="range" min="0" max="70" step="1" value="22" />
+            </label>
+            <label class="field">Text on wallpaper
+              <select id="contrast">
+                <option value="auto">Automatic</option>
+                <option value="light">Dark text</option>
+                <option value="dark">Light text</option>
+              </select>
+            </label>
+          </section>
+        </div>
+      </aside>
+
+      <div class="menu glass" id="menu" role="menu" hidden></div>
+
+      <dialog class="sheet glass" id="shortcut-dialog">
+        <form id="shortcut-form">
+          <h2 id="shortcut-heading">Add shortcut</h2>
+          <label class="field">Name
+            <input id="shortcut-title" type="text" maxlength="40" required />
+          </label>
+          <label class="field">Address
+            <input id="shortcut-url" type="url" maxlength="500" placeholder="https://" required />
+          </label>
+          <label class="check"><input id="shortcut-newtab" type="checkbox" /> Open in a new tab</label>
+          <div class="dialog-actions">
+            <button class="text-button" id="shortcut-icon" type="button">Custom icon…</button>
+            <button class="text-button danger" id="shortcut-remove" type="button" hidden>Remove</button>
+            <span class="spacer"></span>
+            <button class="text-button" id="shortcut-cancel" type="button">Cancel</button>
+            <button class="primary" type="submit">Save</button>
+          </div>
+          <p class="hint" id="shortcut-error" hidden></p>
+        </form>
+      </dialog>
+
+      <dialog class="sheet glass weather-sheet" id="weather-dialog">
+        <header class="panel-head">
+          <h2>Weather</h2>
+          <button class="icon-x" id="weather-close" type="button" aria-label="Close weather">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+          </button>
+        </header>
+        <div id="weather-body"></div>
+      </dialog>
+
+      <dialog class="sheet glass calendar-sheet" id="calendar-dialog">
+        <header class="panel-head">
+          <button class="icon-x" id="calendar-prev" type="button" aria-label="Previous month">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M14 6 8 12l6 6" /></svg>
+          </button>
+          <h2 id="calendar-title">Calendar</h2>
+          <button class="icon-x" id="calendar-next" type="button" aria-label="Next month">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m10 6 6 6-6 6" /></svg>
+          </button>
+        </header>
+        <div id="calendar-grid" class="calendar-grid"></div>
+        <button class="text-button" id="calendar-close" type="button">Close</button>
+      </dialog>
+    </div>
+    <script src="newtab.js"></script>
+  </body>
+</html>

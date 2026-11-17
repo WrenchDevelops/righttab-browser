@@ -1,0 +1,92 @@
+{
+  "name": "righttab",
+  "productName": "RightTab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A desktop browser with vertical tabs on the right, ChatGPT as the default page, and a read-only Chrome import.",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "setup:drm": "npm ci --prefix runtimes/castlabs",
+    "start:drm": "node scripts/with-castlabs.cjs",
+    "diagnose:media": "node scripts/diagnose-media.cjs",
+    "diagnose:media:drm": "node scripts/with-castlabs.cjs electron/media-check.cjs",
+    "package:mac:drm": "node scripts/with-castlabs.cjs --npm exec -- electron-builder --mac dir --config.electronDist=runtimes/castlabs/node_modules/electron/dist --config.electronVersion=45.2.1+wvcus --config.directories.output=dist-drm",
+    "drm:prepare": "node scripts/drm-workflow.cjs prepare",
+    "drm:verify": "node scripts/drm-workflow.cjs verify",
+    "drm:sign": "node scripts/drm-workflow.cjs sign",
+    "drm:restore-cache": "node scripts/drm-workflow.cjs restore-cache",
+    "drm:test:disney": "node scripts/drm-workflow.cjs test",
+    "drm:comparison-probe": "node scripts/media-comparison.cjs probe",
+    "drm:compare": "node scripts/media-comparison.cjs compare",
+    "test": "node --test",
+    "test:creator-scout": "node scripts/check-creator-scout.cjs",
+    "test:creator-scout:visual": "electron scripts/creator-scout-visual-qa.cjs",
+    "package:mac": "electron-builder --mac dir",
+    "smoke": "node scripts/run-smoke.cjs",
+    "test:extensions": "node scripts/check-extensions.cjs",
+    "test:theme-restart": "node scripts/check-theme-restart.cjs",
+    "diagnose:extension": "node scripts/diagnose-extension.cjs",
+    "test:compat": "node scripts/check-compat-integration.cjs",
+    "test:automation": "node scripts/check-automation.cjs",
+    "test:youtubejs-live": "node scripts/check-youtubejs-live.cjs",
+    "test:contact-live": "node scripts/check-contact-live.cjs",
+    "package:win": "electron-builder --win nsis portable --x64"
+  },
+  "devDependencies": {
+    "electron": "45.2.3",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.righttab.browser",
+    "productName": "RightTab",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      "shared/**/*",
+      "src/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "dir",
+        "zip"
+      ],
+      "identity": null
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "deleteAppDataOnUninstall": false
+    }
+  },
+  "dependencies": {
+    "cheerio": "1.2.0",
+    "debug": "4.4.3",
+    "youtubei.js": "18.3.0"
+  }
+}

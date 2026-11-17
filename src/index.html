@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: http: https:; font-src 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RightTab</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="chrome-top">
+    <header id="toolbar">
+      <div class="nav">
+        <button id="back" class="icon-button" title="Back" aria-label="Back"></button>
+        <button id="forward" class="icon-button" title="Forward" aria-label="Forward"></button>
+        <button id="reload" class="icon-button" title="Reload" aria-label="Reload"></button>
+      </div>
+      <button id="home" class="icon-button" type="button" title="Home" aria-label="Open home page"></button>
+      <form id="omnibox">
+        <span id="security" class="site-badge" aria-hidden="true"></span>
+        <input id="address" spellcheck="false" autocomplete="off" aria-label="Address and search">
+        <button id="zoom-reset" type="button" hidden></button>
+        <button id="passwords" class="icon-button" type="button" title="Saved passwords" hidden></button>
+        <button id="star" class="icon-button" type="button" title="Bookmark this page" aria-label="Bookmark this page"></button>
+      </form>
+      <div class="actions">
+        <div id="extension-pins" class="extension-pins" hidden></div>
+        <button id="side-panel-close" class="tray-item" type="button" hidden title="Close panel" aria-label="Close panel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.4 7.4 16.6 16.6M16.6 7.4 7.4 16.6"/></svg></button>
+        <button id="creator-scout-button" class="tray-item" type="button" title="Creator Scout" aria-label="Creator Scout" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.65"/><path class="tray-fill" d="M16.15 7.85 12.72 13.95 7.85 16.15 11.28 10.05Z"/></svg></button>
+        <button id="assistant-button" class="tray-item" type="button" title="Assistant" aria-label="Assistant"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="tray-fill" d="M11.15 2.15c.32 2.95 1.62 4.7 4.55 5.35-2.93.65-4.23 2.4-4.55 5.35-.32-2.95-1.62-4.7-4.55-5.35 2.93-.65 4.23-2.4 4.55-5.35Z"/><path class="tray-fill" d="M17.55 13.2c.16 1.55.9 2.5 2.45 2.85-1.55.35-2.29 1.3-2.45 2.85-.16-1.55-.9-2.5-2.45-2.85 1.55-.35 2.29-1.3 2.45-2.85Z"/></svg></button>
+        <button id="chatgpt-panel" class="tray-item tray-brand" type="button" title="Open ChatGPT side panel" aria-label="Open ChatGPT side panel" aria-pressed="false" hidden></button>
+        <span class="action-break" aria-hidden="true"></span>
+        <button id="downloads-button" class="tray-item" type="button" title="Downloads" aria-label="Downloads"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.6v8.15"/><path d="m8 8.95 4 4 4-4"/><rect class="tray-fill" x="4.85" y="15.15" width="14.3" height="3.85" rx="1.2"/></svg></button>
+        <button id="extensions-button" class="tray-item" type="button" title="Extensions" aria-label="Extensions"><svg viewBox="0 0 24 24" aria-hidden="true"><rect class="tray-fill" x="5.8" y="8.15" width="10.2" height="10.1" rx="1.75"/><circle class="tray-fill" cx="10.9" cy="8.15" r="2.6"/><circle class="tray-fill" cx="16" cy="13.2" r="2.6"/></svg></button>
+        <button id="profile-button" class="tray-item profile-mark" type="button" title="Settings" aria-label="Profile"><span class="profile-disc"><span>R</span></span></button>
+        <button id="menu-button" class="tray-item" type="button" title="Menu" aria-label="Menu"><svg viewBox="0 0 24 24" aria-hidden="true"><circle class="tray-fill" cx="12" cy="5.5" r="1.85"/><circle class="tray-fill" cx="12" cy="12" r="1.85"/><circle class="tray-fill" cx="12" cy="18.5" r="1.85"/></svg></button>
+        <span id="private-pill" hidden>Private</span>
+      </div>
+      <div id="loading-bar" hidden></div>
+    </header>
+    <div id="content-chrome">
+    <div id="bookmarks">
+      <div id="bookmark-items"></div>
+      <button id="all-bookmarks" type="button">All Bookmarks</button>
+    </div>
+    <form id="findbar" hidden>
+      <input id="find-input" placeholder="Find in page" aria-label="Find in page">
+      <span id="find-count"></span>
+      <button id="find-prev" type="button" class="icon-button" title="Previous"></button>
+      <button id="find-next" type="button" class="icon-button" title="Next"></button>
+      <button id="find-close" type="button" class="icon-button" title="Close find"></button>
+    </form>
+    <div id="split-toolbar" hidden>
+      <button id="split-primary" type="button" title="Focus left page"></button>
+      <button id="split-secondary" type="button" title="Focus right page"></button>
+      <button id="split-swap" type="button">Swap sides</button>
+      <button id="split-close" type="button">Close split</button>
+    </div>
+    <div id="recovery" hidden></div>
+    <div id="permission" hidden></div>
+    <div id="extension-control" hidden></div>
+    <div id="suggestions" hidden></div>
+    <div id="popover-slot" hidden><div id="popover" role="menu"></div></div>
+    </div>
+  </div>
+  <aside id="sidebar">
+    <div class="rail-tools">
+      <button id="collapse" class="rail-btn" type="button" title="Collapse tabs" aria-label="Collapse tabs" data-label="Collapse"></button>
+      <button id="workspaces" class="rail-btn" type="button" title="Tab groups" aria-label="Tab groups" data-label="Tab groups"></button>
+      <button id="tab-search" class="rail-btn" type="button" title="Search tabs" aria-label="Search tabs" data-label="Search"></button>
+    </div>
+    <div class="rail-divider"></div>
+    <input id="tab-filter" type="search" placeholder="Search tabs" hidden>
+    <div id="tabs"></div>
+    <button id="new-tab" type="button" aria-label="New tab" data-label="New tab"></button>
+    <div id="resize" title="Resize tabs"></div>
+  </aside>
+  <div id="chrome-bottom">
+    <section id="shelf" hidden></section>
+  </div>
+  <div id="split-handle" role="separator" aria-label="Resize split view" aria-orientation="vertical" aria-valuemin="22" aria-valuemax="78" tabindex="0" hidden></div>
+  <div id="page-snapshot" aria-hidden="true" hidden></div>
+  <div id="overlay" hidden></div>
+  <script src="../shared/themes.js"></script>
+  <script src="themes-ui.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+// Runs the existing RightTab browser in its separate persistent test profile.
+const { app } = require('electron');
+const fs = require('fs');
+const path = require('path');
+const profile = process.env.RIGHTTAB_ACTUAL_CHECK_PROFILE || path.join(app.getPath('appData'), 'RightTab Extension Test');
+process.env.RIGHTTAB_EXTENSION_TEST = '1';
+app.setName('RightTab Extension Test');
+app.setPath('userData', profile);
+app.commandLine.appendSwitch('remote-debugging-port', '0');
+const source = process.argv[2];
+if (!source || !fs.existsSync(path.join(source, 'manifest.json'))) throw new Error('Provide an unpacked extension directory.');
+app.whenReady().then(async () => {
+  const inspector = await require('./compat-worker-inspector.cjs').inspectWorkers(profile);
+  const browser = require('./browser.cjs').startBrowser();
+  await browser.ready;
+  const win = await browser.whenWindow();
+  browser.updateSettings({ completedSetup: true, importOffered: true });
+  browser.showPages(win);
+  const existing = browser.store.settings.installedExtensions.find((item) => item.sourcePath === path.resolve(source));
+  const result = existing ? { ok: true, id: existing.chromiumId } : await browser.extensions.installFromDirectory(source);
+  if (!result.ok) throw new Error(result.error);
+  await new Promise((resolve) => setTimeout(resolve, 6000));
+  const listeners = browser.extensionCompat?.ctx.router.listeners.get('windows.onFocusChanged') || [];
+  console.log('FIRST_EXCEPTION', inspector.first());
+  const workerState = JSON.parse(await inspector.workerState());
+  console.log('WORKER_WINDOWS', JSON.stringify(workerState));
+  if (workerState.onFocusChanged !== 'function' || !workerState.hasListener) throw new Error('Worker does not have the window focus listener.');
+  if (!workerState.debuggerEvent || !workerState.debuggerDetach) throw new Error('Worker debugger listeners are missing.');
+  console.log('WINDOWS_LISTENER', JSON.stringify(listeners.map((item) => ({ id: item.extensionId, type: item.type }))));
+  if (!listeners.some((item) => item.extensionId === 'hehggadaopoacecdllhhajmbjkdcmajg' && item.type === 'service-worker')) throw new Error('Actual worker did not register windows.onFocusChanged.');
+  const server = require('http').createServer((_req, res) => { res.writeHead(200, { 'Content-Type': 'text/html' }); res.end('<title>RightTab debug test</title>'); });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const tab = browser.createTab(win, { url: `http://127.0.0.1:${server.address().port}/` });
+  for (let i = 0; i < 150 && tab.view.webContents.isLoading(); i++) await new Promise((r) => setTimeout(r, 50));
+  const id = tab.view.webContents.id;
+  const attach = await inspector.evaluate(`chrome.debugger.attach({tabId:${id}}, '1.3').then(() => 'attached')`);
+  if (attach !== 'attached') throw new Error('Debugger did not attach');
+  console.log('ACTUAL_WORKER_ATTACH', attach);
+  const title = await inspector.evaluate(`chrome.debugger.sendCommand({tabId:${id}}, 'Runtime.evaluate', {expression:'document.title',returnByValue:true}).then(r=>r.result.value)`);
+  if (title !== 'RightTab debug test') throw new Error('Unexpected command result: ' + title);
+  console.log('ACTUAL_WORKER_COMMAND', title);
+  for (let i = 0; i < 100; i++) { if ((await win.ui.webContents.executeJavaScript(`document.getElementById('extension-control')?.innerText || ''`)).includes('ChatGPT')) break; await new Promise((r) => setTimeout(r, 50)); }
+  const indicator = await win.ui.webContents.executeJavaScript(`document.getElementById('extension-control')?.innerText || ''`);
+  if (!indicator.includes('ChatGPT') || !indicator.includes('Disconnect')) throw new Error('Controlling-extension indicator is missing.');
+  console.log('CONTROL_INDICATOR', indicator.replace(/\s+/g, ' '));
+  await win.ui.webContents.executeJavaScript(`document.querySelector('#extension-control button').click()`);
+  for (let i = 0; i < 100 && tab.view.webContents.debugger.isAttached(); i++) await new Promise((r) => setTimeout(r, 50));
+  if (tab.view.webContents.debugger.isAttached()) throw new Error('Disconnect did not detach');
+  console.log('USER_DISCONNECT', 'detached');
+  server.close();
+  const state = browser.extensions.publicState(win);
+  const extension = state.extensions.find((item) => item.name === 'ChatGPT');
+  console.log('EXTENSION', JSON.stringify({ loaded: extension?.loaded, limitations: extension?.limitations }));
+  const panel = await browser.extensions.openSurface(win, { installId: extension?.installId, kind: 'side-panel' });
+  console.log('PANEL_REQUEST', JSON.stringify(panel));
+  if (panel.ok && win.sidePanelView) {
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    console.log('PANEL_URL', win.sidePanelView.webContents.getURL().split('?')[0]);
+  }
+  inspector.close();
+  browser.store.flush();
+  app.exit(0);
+}).catch((error) => { console.error(error); app.exit(1); });

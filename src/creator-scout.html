@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Creator Scout</title>
+    <link rel="stylesheet" href="creator-scout.css" />
+  </head>
+  <body>
+    <div
+      id="panel-resize"
+      role="separator"
+      aria-label="Resize Creator Scout panel"
+      aria-orientation="vertical"
+      tabindex="0"
+    ></div>
+    <div id="scout-app">
+      <header class="topbar">
+        <span class="brand-mark" aria-hidden="true">✦</span>
+        <div class="mode-tabs" role="tablist" aria-label="Scout tools">
+          <button class="mode-tab" type="button" role="tab" data-mode="scout" aria-selected="true">Creator Scout<span class="brand-byline">BY RIGHTTAB</span></button>
+          <button class="mode-tab" type="button" role="tab" data-mode="texts" aria-selected="false">Ask My Texts</button>
+        </div>
+        <button
+          id="history-button"
+          class="icon-button"
+          type="button"
+          aria-label="Search history"
+          title="Search history"
+        ></button>
+        <button id="settings-button" class="icon-button" type="button" aria-label="Settings" title="Settings">⚙</button>
+        <button
+          id="new-chat-button"
+          class="icon-button"
+          type="button"
+          aria-label="New search"
+          title="New search"
+        ></button>
+      </header>
+      <div id="page-strip"></div>
+      <main id="content" aria-live="polite"></main>
+      <div id="bottom-area">
+        <form id="composer" autocomplete="off">
+          <div class="search-field-label"><span aria-hidden="true">⌕</span> YOUR NEXT GREAT PARTNERSHIP</div>
+          <label class="sr-only" for="ask-input">Ask Scout</label>
+          <textarea
+            id="ask-input"
+            rows="1"
+            maxlength="500"
+            placeholder="Ask Scout..."
+          ></textarea>
+          <button id="send-button" class="send-button" type="submit" aria-label="Search creators" title="Search creators"></button>
+          <div class="depth-row"><span>Search depth</span><div id="depth-controls" role="group" aria-label="Search depth"><button type="button" data-depth="10">Quick</button><button type="button" data-depth="25" aria-pressed="true">Standard</button><button type="button" data-depth="50">Deep</button></div></div>
+          <div class="composer-controls">
+            <button
+              id="more-button"
+              class="icon-button plus-button"
+              type="button"
+              aria-label="More options"
+              title="More options"
+            >
+              +
+            </button>
+            <span class="composer-divider"></span>
+            <button
+              id="attach-button"
+              class="attach-button"
+              type="button"
+              title="Check and attach the selected tab"
+            ></button>
+            <label class="quick-control"
+              ><span class="sr-only">Search limit</span
+              ><select id="limit" aria-label="Search limit" title="Strict YouTube searches: Quick uses up to 3 search calls, Standard up to 6, Deep up to 10. Each call consumes a Search Queries quota unit; project limits may vary.">
+                <option value="10">Quick</option>
+                <option value="25" selected>Standard</option>
+                <option value="50">Deep</option>
+              </select></label
+            >
+            <label class="quick-control"><span class="sr-only">Contact requirement</span><select id="contact-mode" aria-label="Contact requirement"><option value="auto">Auto contact</option><option value="email">Business email</option><option value="any">Any public contact</option></select></label>
+          </div>
+        </form>
+        <p class="footer-note">Check creator details before reaching out.</p>
+      </div>
+      <nav id="primary-nav" aria-label="Creator Scout"><button data-action="go-chat">Discover</button><button data-action="go-saved">Saved<span id="saved-count"></span></button><button data-action="go-outreach">Outreach</button></nav>
+      <div id="menu" hidden role="menu"></div>
+    </div>
+    <script src="creator-scout.js"></script>
+  </body>
+</html>
